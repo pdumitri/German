@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>🇩🇪 Deutsche Fälle — Lernspiel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#1a1a2e;color:#eee;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px}
+h1{color:#e94560;font-size:1.4em;margin-bottom:4px}
+.sub{color:#aaa;font-size:0.8em;margin-bottom:10px;text-align:center}
+.lang-row,.cat-row{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;justify-content:center}
+.btn{padding:6px 10px;border-radius:7px;cursor:pointer;background:#0f3460;font-size:0.78em;border:2px solid transparent;transition:all 0.15s;color:#eee}
+.btn.active{border-color:#e94560;background:#2a1040}
+.btn:hover{border-color:#e94560}
+.tabs-row{display:flex;gap:4px;margin-bottom:10px;justify-content:center}
+.tab{padding:6px 12px;border-radius:7px;cursor:pointer;background:#0f3460;font-size:0.8em;border:2px solid transparent;color:#eee}
+.tab.active{background:#e94560;border-color:#e94560}
+.tab:hover{border-color:#e94560}
+.panel{background:#16213e;border-radius:12px;padding:18px;max-width:620px;width:100%;display:none}
+.panel.show{display:block}
+.bar{display:flex;justify-content:space-between;font-size:11px;color:#aaa;margin-bottom:8px}
+.bar span{background:#0f3460;padding:3px 7px;border-radius:5px}
+.q{font-size:1.1em;text-align:center;margin:10px 0;line-height:1.5}
+.blank{display:inline-block;min-width:55px;border-bottom:3px solid #e94560;color:#e94560;font-weight:bold}
+.hint-btn{text-align:center;color:#555;font-size:0.78em;margin:5px 0;cursor:pointer}
+.hint-btn:hover{color:#f0c040}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0}
+.opt{background:#0f3460;border:2px solid #0f3460;padding:10px;border-radius:8px;text-align:center;cursor:pointer;font-size:1em;transition:all 0.12s}
+.opt:hover{background:#1a4080;border-color:#e94560}
+.opt.correct{background:#1b5e20;border-color:#4caf50}
+.opt.wrong{background:#b71c1c;border-color:#f44336}
+.exp{background:#0a1628;border-left:4px solid #e94560;padding:10px;margin:8px 0;border-radius:0 7px 7px 0;display:none;font-size:0.85em;line-height:1.5}
+.exp.show{display:block}
+.nxt{display:none;background:#e94560;color:#fff;border:none;padding:8px 18px;border-radius:7px;font-size:0.9em;cursor:pointer;margin:6px auto}
+.nxt.show{display:block}
+.nxt:hover{background:#ff6b6b}
+.tr{color:#f0c040;font-style:italic;margin-top:6px;font-size:0.9em}
+table.ref{width:100%;border-collapse:collapse;margin:8px 0;font-size:0.8em}
+table.ref th{background:#e94560;padding:5px;text-align:center}
+table.ref td{padding:5px;text-align:center;border:1px solid #333}
+table.ref tr:nth-child(even){background:#0a1628}
+.ref-section h3{color:#e94560;margin:12px 0 6px;font-size:0.95em}
+.ref-section p{color:#ccc;margin:4px 0;font-size:0.85em}
+</style></head><body>
+<h1>🇩🇪 Deutsche Fälle</h1>
+<p class="sub" id="subtitle"></p>
+
+<div class="lang-row">
+<div class="btn active" onclick="setLang('ro',this)">🇷🇴 Română</div>
+<div class="btn" onclick="setLang('uk',this)">🇺🇦 Українська</div>
+<div class="btn" onclick="setLang('vi',this)">🇻🇳 Tiếng Việt</div>
+<div class="btn" onclick="setLang('tr',this)">🇹🇷 Türkçe</div>
+<div class="btn" onclick="setLang('az',this)">🇦🇿 Azərbaycan</div>
+<div class="btn" onclick="setLang('ru',this)">🇷🇺 Русский</div>
+<div class="btn" onclick="setLang('fr',this)">🇫🇷 Français</div>
+</div>
+
+<div class="tabs-row">
+<div class="tab active" onclick="showTab('game',this)">🎮</div>
+<div class="tab" onclick="showTab('ref',this)">📖</div>
+</div>
+
+<div class="cat-row" id="catRow">
+<div class="btn active" onclick="setCat('all',this)">🎲</div>
+<div class="btn" onclick="setCat('nom',this)">Nom</div>
+<div class="btn" onclick="setCat('akk',this)">Akk</div>
+<div class="btn" onclick="setCat('dat',this)">Dat</div>
+<div class="btn" onclick="setCat('prep',this)">Präp</div>
+<div class="btn" onclick="setCat('wechsel',this)">Wo/Wohin</div>
+<div class="btn" onclick="setCat('pron',this)">👤</div>
+<div class="btn" onclick="setCat('wfragen',this)">W-?</div>
+</div>
+
+<div class="panel show" id="gamePanel">
+<div class="bar"><span>✅<b id="sc">0</b></span><span style="color:#f0c040">🔥<b id="st">0</b></span><span>❌<b id="wr">0</b></span></div>
+<div class="q" id="q"></div>
+<div class="hint-btn" id="hintBtn" onclick="showHint()"></div>
+<div class="opts" id="opts"></div>
+<div class="exp" id="exp"></div>
+<button class="nxt" id="nxt" onclick="next()"></button>
+</div>
+
+<div class="panel ref-section" id="refPanel"></div>
+
+<script>
+// === TRANSLATIONS (7 languages, all UI + explanations) ===
+const L={
+ro:{
+sub:'Alege limba · Alege categoria · Învață!',hintClick:'💡 Click pentru indiciu',next:'Următoarea →',
+correct:'✅ Corect!',wrong:'❌ Greșit! Răspunsul corect:',why:'De ce?',
+nom:'Nominativ (Cine?)',akk:'Akuzativ (Pe cine? Ce?)',dat:'Dativ (Cui?)',gen:'Genitiv (Al cui?)',
+masc:'masculin',fem:'feminin',neut:'neutru',pl:'plural',
+askNom:'Cine face acțiunea? → Nominativ',
+askAkk:'Pe cine/Ce? → Akuzativ',askDat:'Cui? → Dativ',
+verbAkk:'cere Akuzativ (pe cine/ce?)',verbDat:'cere Dativ (cui?)',
+mascAkk:'Masculin la Akuzativ: der→<b>den</b>, ein→<b>einen</b>.',
+noChange:'La Akuzativ femininul și neutrul NU se schimbă!',
+datM:'der→<b>dem</b>, ein→<b>einem</b>',datF:'die→<b>der</b>, eine→<b>einer</b>',datN:'das→<b>dem</b>, ein→<b>einem</b>',
+prepAkk:'cere mereu Akuzativ.',prepDat:'cere mereu Dativ.',
+move:'Mișcare (Wohin?) → Akuzativ',stay:'Loc fix (Wo?) → Dativ',
+pronAkk:'la Akuzativ =',pronDat:'la Dativ =',wouldBe:'(la celălalt caz ar fi:',
+think:'Gândește-te: ce întrebi exact?',
+nomExpl:'Subiectul propoziției = Nominativ. Articolele rămân: der/die/das.',
+translation:'Traducere:',
+refTitle:'Tabel de referință',
+refArt:'Articole',refPron:'Pronume',refPrep:'Prepoziții',
+prepAkkList:'Mereu Akuzativ: durch, für, gegen, ohne, um',
+prepDatList:'Mereu Dativ: aus, bei, mit, nach, seit, von, zu',
+prepWechsel:'Wo/Wohin: an, auf, hinter, in, neben, über, unter, vor, zwischen'
+},
+uk:{
+sub:'Обери мову · Обери категорію · Вчись!',hintClick:'💡 Натисни для підказки',next:'Далі →',
+correct:'✅ Правильно!',wrong:'❌ Неправильно! Правильна відповідь:',why:'Чому?',
+nom:'Називний (Хто?)',akk:'Знахідний (Кого? Що?)',dat:'Давальний (Кому?)',gen:'Родовий (Чий?)',
+masc:'чоловічий',fem:'жіночий',neut:'середній',pl:'множина',
+askNom:'Хто виконує дію? → Називний',
+askAkk:'Кого/Що? → Знахідний',askDat:'Кому? → Давальний',
+verbAkk:'вимагає Знахідний (кого/що?)',verbDat:'вимагає Давальний (кому?)',
+mascAkk:'Чоловічий у Знахідному: der→<b>den</b>, ein→<b>einen</b>.',
+noChange:'У Знахідному жіночий та середній НЕ змінюються!',
+datM:'der→<b>dem</b>, ein→<b>einem</b>',datF:'die→<b>der</b>, eine→<b>einer</b>',datN:'das→<b>dem</b>, ein→<b>einem</b>',
+prepAkk:'завжди вимагає Знахідний.',prepDat:'завжди вимагає Давальний.',
+move:'Рух (Wohin?) → Знахідний',stay:'Місце (Wo?) → Давальний',
+pronAkk:'у Знахідному =',pronDat:'у Давальному =',wouldBe:'(в іншому відмінку:',
+think:'Подумай: що саме ти питаєш?',
+nomExpl:'Підмет речення = Називний. Артиклі: der/die/das.',
+translation:'Переклад:',
+refTitle:'Таблиця довідка',refArt:'Артиклі',refPron:'Займенники',refPrep:'Прийменники',
+prepAkkList:'Завжди Знахідний: durch, für, gegen, ohne, um',
+prepDatList:'Завжди Давальний: aus, bei, mit, nach, seit, von, zu',
+prepWechsel:'Wo/Wohin: an, auf, hinter, in, neben, über, unter, vor, zwischen'
+},
+vi:{
+sub:'Chọn ngôn ngữ · Chọn loại · Học!',hintClick:'💡 Nhấn để xem gợi ý',next:'Tiếp theo →',
+correct:'✅ Đúng rồi!',wrong:'❌ Sai! Đáp án đúng:',why:'Tại sao?',
+nom:'Nominativ (Ai?)',akk:'Akkusativ (Ai/Cái gì?)',dat:'Dativ (Cho ai?)',gen:'Genitiv (Của ai?)',
+masc:'giống đực',fem:'giống cái',neut:'trung tính',pl:'số nhiều',
+askNom:'Ai thực hiện hành động? → Nominativ',
+askAkk:'Ai/Cái gì? → Akkusativ',askDat:'Cho ai? → Dativ',
+verbAkk:'đòi Akkusativ (ai/cái gì?)',verbDat:'đòi Dativ (cho ai?)',
+mascAkk:'Giống đực ở Akkusativ: der→<b>den</b>, ein→<b>einen</b>.',
+noChange:'Ở Akkusativ giống cái và trung tính KHÔNG đổi!',
+datM:'der→<b>dem</b>, ein→<b>einem</b>',datF:'die→<b>der</b>, eine→<b>einer</b>',datN:'das→<b>dem</b>, ein→<b>einem</b>',
+prepAkk:'luôn đòi Akkusativ.',prepDat:'luôn đòi Dativ.',
+move:'Chuyển động (Wohin?) → Akkusativ',stay:'Vị trí cố định (Wo?) → Dativ',
+pronAkk:'ở Akkusativ =',pronDat:'ở Dativ =',wouldBe:'(ở cách khác:',
+think:'Hãy nghĩ: bạn đang hỏi gì?',
+nomExpl:'Chủ ngữ = Nominativ. Mạo từ: der/die/das.',
+translation:'Dịch:',
+refTitle:'Bảng tham khảo',refArt:'Mạo từ',refPron:'Đại từ',refPrep:'Giới từ',
+prepAkkList:'Luôn Akkusativ: durch, für, gegen, ohne, um',
+prepDatList:'Luôn Dativ: aus, bei, mit, nach, seit, von, zu',
+prepWechsel:'Wo/Wohin: an, auf, hinter, in, neben, über, unter, vor, zwischen'
+},
+tr:{
+sub:'Dil seç · Kategori seç · Öğren!',hintClick:'💡 İpucu için tıkla',next:'Sonraki →',
+correct:'✅ Doğru!',wrong:'❌ Yanlış! Doğru cevap:',why:'Neden?',
+nom:'Nominativ (Kim?)',akk:'Akkusativ (Kimi? Neyi?)',dat:'Dativ (Kime?)',gen:'Genitiv (Kimin?)',
+masc:'eril',fem:'dişil',neut:'nötr',pl:'çoğul',
+askNom:'Eylemi kim yapıyor? → Nominativ',
+askAkk:'Kimi/Neyi? → Akkusativ',askDat:'Kime? → Dativ',
+verbAkk:'Akkusativ gerektirir (kimi/neyi?)',verbDat:'Dativ gerektirir (kime?)',
+mascAkk:'Eril Akkusativ: der→<b>den</b>, ein→<b>einen</b>.',
+noChange:'Akkusativ\'de dişil ve nötr DEĞİŞMEZ!',
+datM:'der→<b>dem</b>, ein→<b>einem</b>',datF:'die→<b>der</b>, eine→<b>einer</b>',datN:'das→<b>dem</b>, ein→<b>einem</b>',
+prepAkk:'her zaman Akkusativ gerektirir.',prepDat:'her zaman Dativ gerektirir.',
+move:'Hareket (Wohin?) → Akkusativ',stay:'Sabit konum (Wo?) → Dativ',
+pronAkk:'Akkusativ\'de =',pronDat:'Dativ\'de =',wouldBe:'(diğer halde:',
+think:'Düşün: tam olarak ne soruyorsun?',
+nomExpl:'Özne = Nominativ. Artikeller: der/die/das.',
+translation:'Çeviri:',
+refTitle:'Referans tablosu',refArt:'Artikeller',refPron:'Zamirler',refPrep:'Edatlar',
+prepAkkList:'Her zaman Akkusativ: durch, für, gegen, ohne, um',
+prepDatList:'Her zaman Dativ: aus, bei, mit, nach, seit, von, zu',
+prepWechsel:'Wo/Wohin: an, auf, hinter, in, neben, über, unter, vor, zwischen'
+},
+az:{
+sub:'Dil seç · Kateqoriya seç · Öyrən!',hintClick:'💡 İpucu üçün klik et',next:'Növbəti →',
+correct:'✅ Düzdür!',wrong:'❌ Səhv! Düzgün cavab:',why:'Niyə?',
+nom:'Nominativ (Kim?)',akk:'Akkuzativ (Kimi? Nəyi?)',dat:'Dativ (Kimə?)',gen:'Genitiv (Kimin?)',
+masc:'kişi cinsi',fem:'qadın cinsi',neut:'orta cins',pl:'cəm',
+askNom:'Hərəkəti kim edir? → Nominativ',
+askAkk:'Kimi/Nəyi? → Akkuzativ',askDat:'Kimə? → Dativ',
+verbAkk:'Akkuzativ tələb edir (kimi/nəyi?)',verbDat:'Dativ tələb edir (kimə?)',
+mascAkk:'Kişi cinsi Akkuzativdə: der→<b>den</b>, ein→<b>einen</b>.',
+noChange:'Akkuzativdə qadın cinsi və orta cins DƏYİŞMİR!',
+datM:'der→<b>dem</b>, ein→<b>einem</b>',datF:'die→<b>der</b>, eine→<b>einer</b>',datN:'das→<b>dem</b>, ein→<b>einem</b>',
+prepAkk:'həmişə Akkuzativ tələb edir.',prepDat:'həmişə Dativ tələb edir.',
+move:'Hərəkət (Wohin?) → Akkuzativ',stay:'Sabit yer (Wo?) → Dativ',
+pronAkk:'Akkuzativdə =',pronDat:'Dativdə =',wouldBe:'(digər halda:',
+think:'Fikirləş: nə soruşursan?',
+nomExpl:'Mübtəda = Nominativ. Artikllər: der/die/das.',
+translation:'Tərcümə:',
+refTitle:'İstinad cədvəli',refArt:'Artikllər',refPron:'Əvəzliklər',refPrep:'Sözönləri',
+prepAkkList:'Həmişə Akkuzativ: durch, für, gegen, ohne, um',
+prepDatList:'Həmişə Dativ: aus, bei, mit, nach, seit, von, zu',
+prepWechsel:'Wo/Wohin: an, auf, hinter, in, neben, über, unter, vor, zwischen'
+},
+ru:{
+sub:'Выбери язык · Выбери категорию · Учись!',hintClick:'💡 Нажми для подсказки',next:'Следующий →',
+correct:'✅ Правильно!',wrong:'❌ Неправильно! Правильный ответ:',why:'Почему?',
+nom:'Именительный (Кто?)',akk:'Винительный (Кого? Что?)',dat:'Дательный (Кому?)',gen:'Родительный (Чей?)',
+masc:'мужской',fem:'женский',neut:'средний',pl:'множественное',
+askNom:'Кто выполняет действие? → Именительный',
+askAkk:'Кого/Что? → Винительный',askDat:'Кому? → Дательный',
+verbAkk:'требует Винительный (кого/что?)',verbDat:'требует Дательный (кому?)',
+mascAkk:'Мужской в Винительном: der→<b>den</b>, ein→<b>einen</b>.',
+noChange:'В Винительном женский и средний НЕ меняются!',
+datM:'der→<b>dem</b>, ein→<b>einem</b>',datF:'die→<b>der</b>, eine→<b>einer</b>',datN:'das→<b>dem</b>, ein→<b>einem</b>',
+prepAkk:'всегда требует Винительный.',prepDat:'всегда требует Дательный.',
+move:'Движение (Wohin?) → Винительный',stay:'Место (Wo?) → Дательный',
+pronAkk:'в Винительном =',pronDat:'в Дательном =',wouldBe:'(в другом падеже:',
+think:'Подумай: что именно ты спрашиваешь?',
+nomExpl:'Подлежащее = Именительный. Артикли: der/die/das.',
+translation:'Перевод:',
+refTitle:'Справочная таблица',refArt:'Артикли',refPron:'Местоимения',refPrep:'Предлоги',
+prepAkkList:'Всегда Винительный: durch, für, gegen, ohne, um',
+prepDatList:'Всегда Дательный: aus, bei, mit, nach, seit, von, zu',
+prepWechsel:'Wo/Wohin: an, auf, hinter, in, neben, über, unter, vor, zwischen'
+},
+fr:{
+sub:'Choisis la langue · Choisis la catégorie · Apprends !',hintClick:'💡 Clique pour un indice',next:'Suivant →',
+correct:'✅ Correct !',wrong:'❌ Faux ! Bonne réponse :',why:'Pourquoi ?',
+nom:'Nominatif (Qui ?)',akk:'Accusatif (Qui/Quoi ?)',dat:'Datif (À qui ?)',gen:'Génitif (De qui ?)',
+masc:'masculin',fem:'féminin',neut:'neutre',pl:'pluriel',
+askNom:'Qui fait l\'action ? → Nominatif',
+askAkk:'Qui/Quoi ? → Accusatif',askDat:'À qui ? → Datif',
+verbAkk:'exige l\'accusatif (qui/quoi ?)',verbDat:'exige le datif (à qui ?)',
+mascAkk:'Masculin à l\'accusatif : der→<b>den</b>, ein→<b>einen</b>.',
+noChange:'À l\'accusatif le féminin et le neutre NE changent PAS !',
+datM:'der→<b>dem</b>, ein→<b>einem</b>',datF:'die→<b>der</b>, eine→<b>einer</b>',datN:'das→<b>dem</b>, ein→<b>einem</b>',
+prepAkk:'exige toujours l\'accusatif.',prepDat:'exige toujours le datif.',
+move:'Mouvement (Wohin?) → Accusatif',stay:'Position fixe (Wo?) → Datif',
+pronAkk:'à l\'accusatif =',pronDat:'au datif =',wouldBe:'(à l\'autre cas :',
+think:'Réfléchis : que demandes-tu exactement ?',
+nomExpl:'Le sujet = Nominatif. Articles : der/die/das.',
+translation:'Traduction :',
+refTitle:'Tableau de référence',refArt:'Articles',refPron:'Pronoms',refPrep:'Prépositions',
+prepAkkList:'Toujours accusatif : durch, für, gegen, ohne, um',
+prepDatList:'Toujours datif : aus, bei, mit, nach, seit, von, zu',
+prepWechsel:'Wo/Wohin : an, auf, hinter, in, neben, über, unter, vor, zwischen'
+}
+};
+let lang='ro';
+function t(k){return L[lang][k]||L.ro[k]||k;}
+
+// === NOUN DATABASE with translations ===
+const N={
+m:{Mann:['bărbatul','чоловіка','người đàn ông','adam','kişi','мужчину','l\'homme'],Hund:['câinele','собаку','con chó','köpek','it','собаку','le chien'],Tisch:['masa','стіл','cái bàn','masa','stol','стол','la table'],Kaffee:['cafeaua','каву','cà phê','kahve','qəhvə','кофе','le café'],Arzt:['doctorul','лікаря','bác sĩ','doktor','həkim','врача','le médecin'],Freund:['prietenul','друга','bạn','arkadaş','dost','друга','l\'ami'],Bus:['autobuzul','автобус','xe buýt','otobüs','avtobus','автобус','le bus'],Lehrer:['profesorul','вчителя','thầy giáo','öğretmen','müəllim','учителя','le professeur'],Bruder:['fratele','брата','anh/em trai','kardeş','qardaş','брата','le frère'],Kuchen:['prăjitura','торт','bánh','pasta','tort','торт','le gâteau'],Schlüssel:['cheia','ключ','chìa khóa','anahtar','açar','ключ','la clé'],Park:['parcul','парк','công viên','park','park','парк','le parc']},
+f:{Frau:['femeia','жінку','người phụ nữ','kadın','qadın','женщину','la femme'],Katze:['pisica','кішку','con mèo','kedi','pişik','кошку','le chat'],Schule:['școala','школу','trường','okul','məktəb','школу','l\'école'],Tasche:['geanta','сумку','cái túi','çanta','çanta','сумку','le sac'],Musik:['muzica','музику','âm nhạc','müzik','musiqi','музыку','la musique'],Arbeit:['munca','роботу','công việc','iş','iş','работу','le travail'],Küche:['bucătăria','кухню','nhà bếp','mutfak','mətbəx','кухню','la cuisine'],Freundin:['prietena','подругу','bạn gái','arkadaş','rəfiqə','подругу','l\'amie'],Straße:['strada','вулицю','con đường','sokak','küçə','улицу','la rue']},
+n:{Kind:['copilul','дитину','đứa trẻ','çocuk','uşaq','ребёнка','l\'enfant'],Buch:['cartea','книгу','cuốn sách','kitap','kitab','книгу','le livre'],Auto:['mașina','машину','xe hơi','araba','maşın','машину','la voiture'],Haus:['casa','будинок','ngôi nhà','ev','ev','дом','la maison'],Handy:['telefonul','телефон','điện thoại','telefon','telefon','телефон','le téléphone'],Bier:['berea','пиво','bia','bira','pivə','пиво','la bière'],Kino:['cinematograful','кіно','rạp phim','sinema','kino','кино','le cinéma'],Büro:['biroul','офіс','văn phòng','ofis','ofis','офис','le bureau']}
+};
+// Verb+object pairs (logical only)
+const AKK_PAIRS=[
+['sehen',{m:['Mann','Hund','Arzt','Freund','Lehrer','Bruder'],f:['Frau','Katze','Freundin'],n:['Kind','Auto']},'a vedea','бачити','nhìn thấy','görmek','görmək','видеть','voir'],
+['trinken',{m:['Kaffee'],f:[],n:['Bier']},'a bea','пити','uống','içmek','içmək','пить','boire'],
+['kaufen',{m:['Tisch','Kuchen'],f:['Tasche'],n:['Buch','Auto','Handy']},'a cumpăra','купувати','mua','satın almak','almaq','покупать','acheter'],
+['suchen',{m:['Schlüssel','Hund','Arzt'],f:['Katze','Tasche','Schule'],n:['Handy','Kind','Buch']},'a căuta','шукати','tìm','aramak','axtarmaq','искать','chercher'],
+['brauchen',{m:['Arzt','Schlüssel','Freund'],f:['Tasche','Arbeit'],n:['Auto','Handy','Buch']},'a avea nevoie de','потребувати','cần','ihtiyaç duymak','ehtiyac duymaq','нуждаться в','avoir besoin de'],
+['besuchen',{m:['Freund','Bruder','Arzt'],f:['Freundin','Schule'],n:['Kino']},'a vizita','відвідувати','thăm','ziyaret etmek','ziyarət etmək','навещать','visiter'],
+['lesen',{m:[],f:[],n:['Buch']},'a citi','читати','đọc','okumak','oxumaq','читать','lire'],
+['nehmen',{m:['Bus','Kaffee','Kuchen'],f:[],n:['Auto','Bier']},'a lua','брати','lấy','almak','götürmək','брать','prendre']
+];
+const DAT_PAIRS=[
+['helfen',{m:['Mann','Freund','Bruder','Lehrer'],f:['Frau','Freundin'],n:['Kind']},'a ajuta','допомагати','giúp','yardım etmek','kömək etmək','помогать','aider'],
+['danken',{m:['Arzt','Lehrer','Freund'],f:['Frau','Freundin'],n:['Kind']},'a mulțumi','дякувати','cảm ơn','teşekkür etmek','təşəkkür etmək','благодарить','remercier'],
+['gehören',{m:['Mann','Freund','Bruder'],f:['Frau','Freundin'],n:['Kind']},'a aparține','належати','thuộc về','ait olmak','aid olmaq','принадлежать','appartenir à'],
+['antworten',{m:['Lehrer','Arzt','Mann'],f:['Frau','Freundin'],n:['Kind']},'a răspunde','відповідати','trả lời','cevap vermek','cavab vermək','отвечать','répondre à'],
+['glauben',{m:['Mann','Freund','Arzt'],f:['Frau','Freundin'],n:['Kind']},'a crede','вірити','tin','inanmak','inanmaq','верить','croire']
+];
+const PREP_AKK_DATA=[['durch',{m:['Park'],f:['Stadt','Straße'],n:['Haus']}],['für',{m:['Freund','Bruder','Mann'],f:['Frau','Freundin'],n:['Kind']}],['gegen',{m:['Tisch'],f:['Straße'],n:['Auto']}],['ohne',{m:['Schlüssel','Freund','Hund'],f:['Tasche','Arbeit'],n:['Auto','Handy']}],['um',{m:['Park','Tisch'],f:['Schule'],n:['Haus']}]];
+const PREP_DAT_DATA=[['mit',{m:['Bus','Freund','Bruder','Hund'],f:['Freundin','Katze'],n:['Auto','Kind']}],['aus',{m:['Park'],f:['Schule','Küche','Tasche'],n:['Haus','Büro','Kino']}],['bei',{m:['Arzt','Freund'],f:['Arbeit','Freundin'],n:[]}],['nach',{m:[],f:['Arbeit','Schule'],n:[]}],['von',{m:['Arzt','Freund','Bruder'],f:['Arbeit','Schule','Freundin'],n:['Büro','Kino']}],['zu',{m:['Arzt','Freund'],f:['Schule','Arbeit'],n:['Büro','Kino']}]];
+const WECHSEL_DATA=[['in',{m:['Park'],f:['Schule','Küche'],n:['Haus','Büro','Kino']}],['auf',{m:['Tisch'],f:['Straße'],n:[]}],['an',{m:['Tisch'],f:['Schule'],n:[]}],['vor',{m:['Park'],f:['Schule'],n:['Haus','Kino']}],['hinter',{m:['Park'],f:['Schule'],n:['Haus']}]];
+const PRON=[{nom:'ich',akk:'mich',dat:'mir'},{nom:'du',akk:'dich',dat:'dir'},{nom:'er',akk:'ihn',dat:'ihm'},{nom:'sie',akk:'sie',dat:'ihr'},{nom:'wir',akk:'uns',dat:'uns'}];
+const WFRAGEN=[
+{q:'___ ist das?',ans:'Wer',opts:['Wer','Wen','Wem','Was'],tr:['Cine e asta?','Хто це?','Đây là ai?','Bu kim?','Bu kimdir?','Кто это?','Qui est-ce ?']},
+{q:'___ siehst du?',ans:'Wen',opts:['Wer','Wen','Wem','Was'],tr:['Pe cine vezi?','Кого ти бачиш?','Bạn thấy ai?','Kimi görüyorsun?','Kimi görürsən?','Кого ты видишь?','Qui vois-tu ?']},
+{q:'___ hilfst du?',ans:'Wem',opts:['Wer','Wen','Wem','Was'],tr:['Cui ajuți?','Кому допомагаєш?','Bạn giúp ai?','Kime yardım ediyorsun?','Kimə kömək edirsən?','Кому помогаешь?','À qui aides-tu ?']},
+{q:'___ trinkst du?',ans:'Was',opts:['Wer','Wen','Wem','Was'],tr:['Ce bei?','Що п\'єш?','Bạn uống gì?','Ne içiyorsun?','Nə içirsən?','Что пьёшь?','Que bois-tu ?']},
+{q:'___ gehört das Buch?',ans:'Wem',opts:['Wer','Wen','Wem','Wessen'],tr:['Cui aparține cartea?','Кому належить книга?','Sách thuộc về ai?','Kitap kime ait?','Kitab kimə aiddir?','Кому принадлежит книга?','À qui appartient le livre ?']},
+{q:'___ wohnst du?',ans:'Wo',opts:['Wo','Wohin','Woher','Wann'],tr:['Unde locuiești?','Де живеш?','Bạn sống ở đâu?','Nerede yaşıyorsun?','Harada yaşayırsan?','Где живёшь?','Où habites-tu ?']},
+{q:'___ gehst du?',ans:'Wohin',opts:['Wo','Wohin','Woher','Wann'],tr:['Încotro mergi?','Куди йдеш?','Bạn đi đâu?','Nereye gidiyorsun?','Haraya gedirsən?','Куда идёшь?','Où vas-tu ?']},
+{q:'___ kommst du?',ans:'Woher',opts:['Wo','Wohin','Woher','Wann'],tr:['De unde vii?','Звідки йдеш?','Bạn đến từ đâu?','Nereden geliyorsun?','Haradan gəlirsən?','Откуда идёшь?','D\'où viens-tu ?']}
+];
+
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function art(g,c,def){const t={m:{nom:def?'der':'ein',akk:def?'den':'einen',dat:def?'dem':'einem'},f:{nom:def?'die':'eine',akk:def?'die':'eine',dat:def?'der':'einer'},n:{nom:def?'das':'ein',akk:def?'das':'ein',dat:def?'dem':'einem'}};return t[g][c];}
+const conjs={sehen:['sehe','siehst','sieht'],lesen:['lese','liest','liest'],nehmen:['nehme','nimmst','nimmt'],essen:['esse','isst','isst']};
+function conj(v,i){if(conjs[v])return conjs[v][i];const s=v.endsWith('en')?v.slice(0,-2):v.slice(0,-1);return s+['e','st','t'][i];}
+const subj=[['Ich',0],['Du',1],['Er',2],['Sie',2],['Wir',0]];
+const langIdx={ro:0,uk:1,vi:2,tr:3,az:4,ru:5,fr:6};
+
+let cat='all',sc=0,wr=0,st=0,cur=null,answered=false;
+
+function setLang(l,el){lang=l;document.querySelectorAll('.lang-row .btn').forEach(e=>e.classList.remove('active'));el.classList.add('active');updateUI();if(document.getElementById('refPanel').classList.contains('show'))buildRef();next();}
+function setCat(c,el){cat=c;document.querySelectorAll('.cat-row .btn').forEach(e=>e.classList.remove('active'));el.classList.add('active');next();}
+function showTab(id,el){document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));el.classList.add('active');document.getElementById('gamePanel').classList.toggle('show',id==='game');document.getElementById('refPanel').classList.toggle('show',id==='ref');document.getElementById('catRow').style.display=id==='game'?'flex':'none';if(id==='ref')buildRef();}
+function updateUI(){document.getElementById('subtitle').textContent=t('sub');document.getElementById('hintBtn').textContent=t('hintClick');document.getElementById('nxt').textContent=t('next');}
+
+function buildRef(){
+document.getElementById('refPanel').innerHTML=`<h3>${t('refTitle')}</h3>
+<h3>${t('refArt')}</h3>
+<table class="ref"><tr><th></th><th>${t('masc')}</th><th>${t('fem')}</th><th>${t('neut')}</th><th>${t('pl')}</th></tr>
+<tr><td><b>NOM</b></td><td>der/ein</td><td>die/eine</td><td>das/ein</td><td>die</td></tr>
+<tr><td><b>AKK</b></td><td><b style="color:#e94560">den/einen</b></td><td>die/eine</td><td>das/ein</td><td>die</td></tr>
+<tr><td><b>DAT</b></td><td><b style="color:#f0c040">dem/einem</b></td><td><b style="color:#f0c040">der/einer</b></td><td><b style="color:#f0c040">dem/einem</b></td><td><b style="color:#f0c040">den</b></td></tr></table>
+<h3>${t('refPron')}</h3>
+<table class="ref"><tr><th></th><th>ich</th><th>du</th><th>er</th><th>sie</th><th>es</th><th>wir</th></tr>
+<tr><td><b>AKK</b></td><td>mich</td><td>dich</td><td>ihn</td><td>sie</td><td>es</td><td>uns</td></tr>
+<tr><td><b>DAT</b></td><td>mir</td><td>dir</td><td>ihm</td><td>ihr</td><td>ihm</td><td>uns</td></tr></table>
+<h3>${t('refPrep')}</h3>
+<p style="color:#f44336">${t('prepAkkList')}</p>
+<p style="color:#4caf50">${t('prepDatList')}</p>
+<p style="color:#ff9800">${t('prepWechsel')}</p>`;}
+
+function getNounTr(noun,gen){const li=langIdx[lang];if(N[gen]&&N[gen][noun])return N[gen][noun][li];return noun;}
+
+function gen(){
+const types=cat==='all'?['nom','akk','dat','prep_akk','prep_dat','wechsel','pron','wfragen']:[cat==='prep'?pick(['prep_akk','prep_dat']):cat];
+const type=pick(types);
+let sentence,answer,options,hint,explanation,translation;
+
+if(type==='nom'){
+const gen_=pick(['m','f','n']);const noun=pick(Object.keys(N[gen_]));
+const def=Math.random()>0.5;answer=art(gen_,'nom',def);
+sentence=`___ ${noun} ist hier.`;
+hint=t('askNom');
+explanation=t('nomExpl');
+translation=`${t('translation')} ${getNounTr(noun,gen_)} e aici.`;
+options=def?['der','die','das','dem']:['ein','eine','ein','einem'];
+if(!options.includes(answer))options[0]=answer;
+}
+else if(type==='akk'){
+const pair=pick(AKK_PAIRS);const[verb,nouns_]=pair;const gen_=pick(Object.keys(nouns_).filter(g=>nouns_[g].length>0));
+const noun=pick(nouns_[gen_]);const def=Math.random()>0.5;answer=art(gen_,'akk',def);
+const[s,si]=pick(subj);sentence=`${s} ${conj(verb,si)} ___ ${noun}.`;
+const gn=t(gen_==='m'?'masc':gen_==='f'?'fem':'neut');
+hint=`"${verb}" → ${t('askAkk')} "${noun}" = ${gn}.`;
+explanation=gen_==='m'?`<b>${verb}</b> ${t('verbAkk')}<br>${t('mascAkk')}`:`<b>${verb}</b> ${t('verbAkk')}<br>${t('noChange')}`;
+const vTr=pair[langIdx[lang]+2]||pair[2];
+translation=`${t('translation')} ${s==='Ich'?'Eu':s==='Du'?'Tu':s==='Er'?'El':s==='Sie'?'Ea':s==='Wir'?'Noi':s} ${vTr} ${getNounTr(noun,gen_)}.`;
+options=def?['den','die','das','dem']:['einen','eine','ein','einem'];
+}
+else if(type==='dat'){
+const pair=pick(DAT_PAIRS);const[verb,nouns_]=pair;const gen_=pick(Object.keys(nouns_).filter(g=>nouns_[g].length>0));
+const noun=pick(nouns_[gen_]);const def=Math.random()>0.5;answer=art(gen_,'dat',def);
+const[s,si]=pick(subj);sentence=`${s} ${conj(verb,si)} ___ ${noun}.`;
+const gn=t(gen_==='m'?'masc':gen_==='f'?'fem':'neut');
+const dc={m:t('datM'),f:t('datF'),n:t('datN')};
+hint=`"${verb}" → ${t('askDat')} "${noun}" = ${gn}.`;
+explanation=`<b>${verb}</b> ${t('verbDat')}<br>"${noun}" = ${gn} → ${dc[gen_]}`;
+const vTr=pair[langIdx[lang]+2]||pair[2];
+translation=`${t('translation')} ${s==='Ich'?'Eu':s==='Du'?'Tu':s==='Er'?'El':s==='Sie'?'Ea':s==='Wir'?'Noi':s} ${vTr} ${getNounTr(noun,gen_)}.`;
+options=def?['dem','der','den','das']:['einem','einer','einen','eine'];
+}
+else if(type==='prep_akk'){
+const[prep,nouns_]=pick(PREP_AKK_DATA);const gen_=pick(Object.keys(nouns_).filter(g=>nouns_[g].length>0));
+const noun=pick(nouns_[gen_]);const def=Math.random()>0.4;answer=art(gen_,'akk',def);
+sentence=`Er geht ${prep} ___ ${noun}.`;
+hint=`"${prep}" → ${t('prepAkk')}`;
+explanation=`<b>${prep}</b> ${t('prepAkk')}<br>"${noun}" = ${t(gen_==='m'?'masc':gen_==='f'?'fem':'neut')}${gen_==='m'?' → '+t('mascAkk'):''}`;
+translation=`${t('translation')} El merge ${prep} ${getNounTr(noun,gen_)}.`;
+options=def?['den','dem','die','das']:['einen','einem','eine','ein'];
+}
+else if(type==='prep_dat'){
+const[prep,nouns_]=pick(PREP_DAT_DATA);const gen_=pick(Object.keys(nouns_).filter(g=>nouns_[g].length>0));
+const noun=pick(nouns_[gen_]);const def=Math.random()>0.4;answer=art(gen_,'dat',def);
+sentence=`Er kommt ${prep} ___ ${noun}.`;
+hint=`"${prep}" → ${t('prepDat')}`;
+const dc={m:t('datM'),f:t('datF'),n:t('datN')};
+explanation=`<b>${prep}</b> ${t('prepDat')}<br>"${noun}" = ${t(gen_==='m'?'masc':gen_==='f'?'fem':'neut')} → ${dc[gen_]}`;
+translation=`${t('translation')} El vine ${prep} ${getNounTr(noun,gen_)}.`;
+options=def?['dem','der','den','die']:['einem','einer','einen','eine'];
+}
+else if(type==='wechsel'){
+const[prep,nouns_]=pick(WECHSEL_DATA);const gen_=pick(Object.keys(nouns_).filter(g=>nouns_[g].length>0));
+const noun=pick(nouns_[gen_]);const mov=Math.random()>0.5;
+const cas=mov?'akk':'dat';answer=art(gen_,cas,true);
+const verb=mov?'geht':'ist';
+sentence=`Er ${verb} ${prep} ___ ${noun}.`;
+hint=mov?t('move'):t('stay');
+explanation=mov?`<b>${verb}</b> = ${t('move')}`:`<b>${verb}</b> = ${t('stay')}`;
+translation=mov?`${t('translation')} El merge ${prep} ${getNounTr(noun,gen_)}.`:`${t('translation')} El e ${prep} ${getNounTr(noun,gen_)}.`;
+options=['den','dem','der','die','das'];
+}
+else if(type==='pron'){
+const p=pick(PRON);const isAkk=Math.random()>0.5;
+const verb=isAkk?pick(['sehen','suchen','brauchen']):pick(['helfen','danken','glauben']);
+answer=isAkk?p.akk:p.dat;
+sentence=`Er ${conj(verb,2)} ___ . (${p.nom})`;
+hint=`"${verb}" → ${isAkk?t('askAkk'):t('askDat')}`;
+explanation=isAkk?`<b>${verb}</b> ${t('verbAkk')}<br>"${p.nom}" ${t('pronAkk')} <b>${p.akk}</b> ${t('wouldBe')} ${p.dat})`:`<b>${verb}</b> ${t('verbDat')}<br>"${p.nom}" ${t('pronDat')} <b>${p.dat}</b> ${t('wouldBe')} ${p.akk})`;
+translation='';
+options=[p.akk,p.dat];while(options.length<4)options.push(pick(['mich','mir','dich','dir','ihn','ihm','sie','ihr','uns','euch'].filter(x=>!options.includes(x))));
+}
+else{
+const w=pick(WFRAGEN);sentence=w.q;answer=w.ans;options=[...w.opts];
+hint=t('think');explanation=`<b>${w.ans}</b>`;
+translation=`${t('translation')} ${w.tr[langIdx[lang]]}`;
+}
+if(!options.includes(answer))options[0]=answer;
+options=[...new Set(options)].slice(0,4);if(!options.includes(answer))options[3]=answer;
+return{sentence,answer,options:options.sort(()=>Math.random()-0.5),hint,explanation,translation};
+}
+
+function render(){cur=gen();answered=false;document.getElementById('q').innerHTML=cur.sentence.replace('___','<span class="blank">?</span>');document.getElementById('hintBtn').textContent=t('hintClick');document.getElementById('exp').classList.remove('show');document.getElementById('nxt').classList.remove('show');document.getElementById('nxt').textContent=t('next');document.getElementById('opts').innerHTML=cur.options.map(o=>`<div class="opt" onclick="check(this,'${o}')">${o}</div>`).join('');}
+function showHint(){document.getElementById('hintBtn').textContent='💡 '+cur.hint;}
+function check(el,sel){
+if(answered)return;answered=true;
+document.querySelectorAll('.opt').forEach(o=>{if(o.textContent===cur.answer)o.classList.add('correct');if(o.textContent===sel&&sel!==cur.answer)o.classList.add('wrong');});
+let html='';
+if(sel===cur.answer){sc++;st++;html=`<span style="color:#4caf50">${t('correct')}</span>`;}
+else{wr++;st=0;html=`<span style="color:#f44336">${t('wrong')} <b style="color:#4caf50;font-size:1.2em">${cur.answer}</b></span><br><br><b>${t('why')}</b> ${cur.explanation}`;}
+if(cur.translation)html+=`<div class="tr">${cur.translation}</div>`;
+document.getElementById('exp').innerHTML=html;
+document.getElementById('sc').textContent=sc;document.getElementById('wr').textContent=wr;document.getElementById('st').textContent=st;
+document.getElementById('exp').classList.add('show');document.getElementById('nxt').classList.add('show');
+}
+function next(){render();}
+updateUI();render();
+</script>
