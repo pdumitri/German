@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>🇩🇪 Deutsche Fälle — Lernspiel v3</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#1a1a2e;color:#eee;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px}
+h1{color:#e94560;font-size:1.4em;margin-bottom:4px}
+.sub{color:#aaa;font-size:0.8em;margin-bottom:10px;text-align:center}
+.row{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;justify-content:center}
+.btn{padding:6px 10px;border-radius:7px;cursor:pointer;background:#0f3460;font-size:0.78em;border:2px solid transparent;transition:all 0.15s;color:#eee}
+.btn.active{border-color:#e94560;background:#2a1040}
+.btn:hover{border-color:#e94560}
+.tab{padding:6px 12px;border-radius:7px;cursor:pointer;background:#0f3460;font-size:0.8em;border:2px solid transparent;color:#eee}
+.tab.active{background:#e94560;border-color:#e94560}
+.tab:hover{border-color:#e94560}
+.panel{background:#16213e;border-radius:12px;padding:18px;max-width:620px;width:100%;display:none}
+.panel.show{display:block}
+.bar{display:flex;justify-content:space-between;font-size:11px;color:#aaa;margin-bottom:8px}
+.bar span{background:#0f3460;padding:3px 7px;border-radius:5px}
+.q{font-size:1.1em;text-align:center;margin:10px 0;line-height:1.5}
+.blank{display:inline-block;min-width:55px;border-bottom:3px solid #e94560;color:#e94560;font-weight:bold}
+.hb{text-align:center;color:#555;font-size:0.78em;margin:5px 0;cursor:pointer}.hb:hover{color:#f0c040}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0}
+.opt{background:#0f3460;border:2px solid #0f3460;padding:10px;border-radius:8px;text-align:center;cursor:pointer;font-size:1em;transition:all 0.12s}
+.opt:hover{background:#1a4080;border-color:#e94560}.opt.correct{background:#1b5e20;border-color:#4caf50}.opt.wrong{background:#b71c1c;border-color:#f44336}
+.exp{background:#0a1628;border-left:4px solid #e94560;padding:10px;margin:8px 0;border-radius:0 7px 7px 0;display:none;font-size:0.85em;line-height:1.5}.exp.show{display:block}
+.nxt{display:none;background:#e94560;color:#fff;border:none;padding:8px 18px;border-radius:7px;font-size:0.9em;cursor:pointer;margin:6px auto}.nxt.show{display:block}.nxt:hover{background:#ff6b6b}
+.tr{color:#f0c040;font-style:italic;margin-top:6px;font-size:0.9em}
+table.ref{width:100%;border-collapse:collapse;margin:8px 0;font-size:0.8em}
+table.ref th{background:#e94560;padding:5px;text-align:center}
+table.ref td{padding:5px;text-align:center;border:1px solid #333}
+table.ref tr:nth-child(even){background:#0a1628}
+.rs h3{color:#e94560;margin:12px 0 6px;font-size:0.95em}
+.rs p{color:#ccc;margin:4px 0;font-size:0.85em}
+</style></head><body>
+<h1>🇩🇪 Deutsche Fälle</h1>
+<p class="sub" id="sub"></p>
+<div class="row" id="langRow">
+<div class="btn active" onclick="SL('ro',this)">🇷🇴</div>
+<div class="btn" onclick="SL('uk',this)">🇺🇦</div>
+<div class="btn" onclick="SL('vi',this)">🇻🇳</div>
+<div class="btn" onclick="SL('tr',this)">🇹🇷</div>
+<div class="btn" onclick="SL('az',this)">🇦🇿</div>
+<div class="btn" onclick="SL('ru',this)">🇷🇺</div>
+<div class="btn" onclick="SL('fr',this)">🇫🇷</div>
+</div>
+<div class="row">
+<div class="tab active" onclick="ST('g',this)">🎮</div>
+<div class="tab" onclick="ST('r',this)">📖</div>
+<div class="tab" onclick="ST('e',this)">📚</div>
+</div>
+<div class="row" id="catRow">
+<div class="btn active" onclick="SC('all',this)">🎲</div>
+<div class="btn" onclick="SC('nom',this)">Nom</div>
+<div class="btn" onclick="SC('akk',this)">Akk</div>
+<div class="btn" onclick="SC('dat',this)">Dat</div>
+<div class="btn" onclick="SC('prep',this)">Präp</div>
+<div class="btn" onclick="SC('wech',this)">Wo/Wohin</div>
+<div class="btn" onclick="SC('pron',this)">👤</div>
+<div class="btn" onclick="SC('wf',this)">W-?</div>
+<div class="btn" onclick="SC('perfekt',this)">Perfekt</div>
+<div class="btn" onclick="SC('praet',this)">Präteritum</div>
+</div>
+<div class="panel show" id="gP">
+<div class="bar"><span>✅<b id="sc">0</b></span><span style="color:#f0c040">🔥<b id="stk">0</b></span><span>❌<b id="wr">0</b></span></div>
+<div class="q" id="q"></div>
+<div class="hb" id="hb" onclick="SH()"></div>
+<div class="opts" id="opts"></div>
+<div class="exp" id="exp"></div>
+<button class="nxt" id="nxt" onclick="NX()"></button>
+</div>
+<div class="panel rs" id="rP"></div>
+<div class="panel rs" id="eP"></div>
+<script>
+const UI={
+ro:{sub:'Alege limba · Categoria · Învață!',hint:'💡 Indiciu',next:'Următoarea →',correct:'✅ Corect!',wrong:'❌ Greșit! Corect:',why:'De ce?',translation:'Traducere:',
+vAkk:'cere Akuzativ (pe cine/ce?)',vDat:'cere Dativ (cui?)',mAkk:'Masculin Akk: der→den, ein→einen.',noChg:'Feminin/Neutru la Akk NU se schimbă!',
+dM:'der→dem, ein→einem',dF:'die→der, eine→einer',dN:'das→dem, ein→einem',pAkk:'cere mereu Akuzativ.',pDat:'cere mereu Dativ.',
+mov:'Mișcare (Wohin?) → Akk',stay:'Loc fix (Wo?) → Dat',nomR:'Subiectul = Nominativ (der/die/das).',
+prAkk:'la Akuzativ =',prDat:'la Dativ =',other:'celălalt caz:',think:'Ce întrebi exact?',
+m:'masc.',f:'fem.',n:'neutru',ref:'Referință',prepA:'Mereu Akk: durch,für,gegen,ohne,um',prepD:'Mereu Dat: aus,bei,mit,nach,seit,von,zu',prepW:'Wo/Wohin: an,auf,hinter,in,neben,über,unter,vor,zwischen'},
+uk:{sub:'Обери мову · Категорію · Вчись!',hint:'💡 Підказка',next:'Далі →',correct:'✅ Правильно!',wrong:'❌ Неправильно! Вірно:',why:'Чому?',translation:'Переклад:',
+vAkk:'вимагає Знахідний (кого/що?)',vDat:'вимагає Давальний (кому?)',mAkk:'Чоловічий Знах.: der→den, ein→einen.',noChg:'Жіночий/Середній у Знах. НЕ змінюються!',
+dM:'der→dem, ein→einem',dF:'die→der, eine→einer',dN:'das→dem, ein→einem',pAkk:'завжди вимагає Знахідний.',pDat:'завжди вимагає Давальний.',
+mov:'Рух (Wohin?) → Знах.',stay:'Місце (Wo?) → Дав.',nomR:'Підмет = Називний (der/die/das).',
+prAkk:'у Знахідному =',prDat:'у Давальному =',other:'інший відмінок:',think:'Що саме питаєш?',
+m:'чол.',f:'жін.',n:'серед.',ref:'Довідка',prepA:'Завжди Знах.: durch,für,gegen,ohne,um',prepD:'Завжди Дав.: aus,bei,mit,nach,seit,von,zu',prepW:'Wo/Wohin: an,auf,hinter,in,neben,über,unter,vor,zwischen'},
+vi:{sub:'Chọn ngôn ngữ · Loại · Học!',hint:'💡 Gợi ý',next:'Tiếp →',correct:'✅ Đúng!',wrong:'❌ Sai! Đáp án:',why:'Tại sao?',translation:'Dịch:',
+vAkk:'đòi Akkusativ (ai/gì?)',vDat:'đòi Dativ (cho ai?)',mAkk:'Đực Akk: der→den, ein→einen.',noChg:'Cái/Trung ở Akk KHÔNG đổi!',
+dM:'der→dem, ein→einem',dF:'die→der, eine→einer',dN:'das→dem, ein→einem',pAkk:'luôn đòi Akkusativ.',pDat:'luôn đòi Dativ.',
+mov:'Chuyển động (Wohin?) → Akk',stay:'Cố định (Wo?) → Dat',nomR:'Chủ ngữ = Nominativ (der/die/das).',
+prAkk:'ở Akk =',prDat:'ở Dat =',other:'cách khác:',think:'Bạn hỏi gì?',
+m:'đực',f:'cái',n:'trung',ref:'Tham khảo',prepA:'Luôn Akk: durch,für,gegen,ohne,um',prepD:'Luôn Dat: aus,bei,mit,nach,seit,von,zu',prepW:'Wo/Wohin: an,auf,hinter,in,neben,über,unter,vor,zwischen'},
+tr:{sub:'Dil seç · Kategori · Öğren!',hint:'💡 İpucu',next:'Sonraki →',correct:'✅ Doğru!',wrong:'❌ Yanlış! Doğru:',why:'Neden?',translation:'Çeviri:',
+vAkk:'Akkusativ gerektirir (kimi/neyi?)',vDat:'Dativ gerektirir (kime?)',mAkk:'Eril Akk: der→den, ein→einen.',noChg:'Dişil/Nötr Akk\'de DEĞİŞMEZ!',
+dM:'der→dem, ein→einem',dF:'die→der, eine→einer',dN:'das→dem, ein→einem',pAkk:'her zaman Akkusativ.',pDat:'her zaman Dativ.',
+mov:'Hareket (Wohin?) → Akk',stay:'Konum (Wo?) → Dat',nomR:'Özne = Nominativ (der/die/das).',
+prAkk:'Akk\'de =',prDat:'Dat\'de =',other:'diğer hal:',think:'Ne soruyorsun?',
+m:'eril',f:'dişil',n:'nötr',ref:'Referans',prepA:'Hep Akk: durch,für,gegen,ohne,um',prepD:'Hep Dat: aus,bei,mit,nach,seit,von,zu',prepW:'Wo/Wohin: an,auf,hinter,in,neben,über,unter,vor,zwischen'},
+az:{sub:'Dil seç · Kateqoriya · Öyrən!',hint:'💡 İpucu',next:'Növbəti →',correct:'✅ Düzdür!',wrong:'❌ Səhv! Düzgün:',why:'Niyə?',translation:'Tərcümə:',
+vAkk:'Akkuzativ tələb edir (kimi/nəyi?)',vDat:'Dativ tələb edir (kimə?)',mAkk:'Kişi Akk: der→den, ein→einen.',noChg:'Qadın/Orta Akk-da DƏYİŞMİR!',
+dM:'der→dem, ein→einem',dF:'die→der, eine→einer',dN:'das→dem, ein→einem',pAkk:'həmişə Akkuzativ.',pDat:'həmişə Dativ.',
+mov:'Hərəkət (Wohin?) → Akk',stay:'Yer (Wo?) → Dat',nomR:'Mübtəda = Nominativ (der/die/das).',
+prAkk:'Akk-da =',prDat:'Dat-da =',other:'digər hal:',think:'Nə soruşursan?',
+m:'kişi',f:'qadın',n:'orta',ref:'İstinad',prepA:'Həmişə Akk: durch,für,gegen,ohne,um',prepD:'Həmişə Dat: aus,bei,mit,nach,seit,von,zu',prepW:'Wo/Wohin: an,auf,hinter,in,neben,über,unter,vor,zwischen'},
+ru:{sub:'Выбери язык · Категорию · Учись!',hint:'💡 Подсказка',next:'Далее →',correct:'✅ Верно!',wrong:'❌ Неверно! Ответ:',why:'Почему?',translation:'Перевод:',
+vAkk:'требует Винительный (кого/что?)',vDat:'требует Дательный (кому?)',mAkk:'Муж. Вин.: der→den, ein→einen.',noChg:'Жен./Ср. в Вин. НЕ меняются!',
+dM:'der→dem, ein→einem',dF:'die→der, eine→einer',dN:'das→dem, ein→einem',pAkk:'всегда Винительный.',pDat:'всегда Дательный.',
+mov:'Движение (Wohin?) → Вин.',stay:'Место (Wo?) → Дат.',nomR:'Подлежащее = Именительный (der/die/das).',
+prAkk:'в Вин. =',prDat:'в Дат. =',other:'другой падеж:',think:'Что спрашиваешь?',
+m:'муж.',f:'жен.',n:'ср.',ref:'Справка',prepA:'Всегда Вин.: durch,für,gegen,ohne,um',prepD:'Всегда Дат.: aus,bei,mit,nach,seit,von,zu',prepW:'Wo/Wohin: an,auf,hinter,in,neben,über,unter,vor,zwischen'},
+fr:{sub:'Choisis la langue · Catégorie · Apprends !',hint:'💡 Indice',next:'Suivant →',correct:'✅ Correct !',wrong:'❌ Faux ! Réponse :',why:'Pourquoi ?',translation:'Traduction :',
+vAkk:'exige l\'accusatif (qui/quoi ?)',vDat:'exige le datif (à qui ?)',mAkk:'Masc. acc. : der→den, ein→einen.',noChg:'Fém./Neutre à l\'acc. NE changent PAS !',
+dM:'der→dem, ein→einem',dF:'die→der, eine→einer',dN:'das→dem, ein→einem',pAkk:'toujours accusatif.',pDat:'toujours datif.',
+mov:'Mouvement (Wohin?) → Acc.',stay:'Position (Wo?) → Dat.',nomR:'Sujet = Nominatif (der/die/das).',
+prAkk:'à l\'acc. =',prDat:'au dat. =',other:'autre cas :',think:'Que demandes-tu ?',
+m:'masc.',f:'fém.',n:'neutre',ref:'Référence',prepA:'Toujours acc. : durch,für,gegen,ohne,um',prepD:'Toujours dat. : aus,bei,mit,nach,seit,von,zu',prepW:'Wo/Wohin : an,auf,hinter,in,neben,über,unter,vor,zwischen'}
+};
+let lang='ro';function t(k){return UI[lang][k]||UI.ro[k]||k;}
+const li={ro:0,uk:1,vi:2,tr:3,az:4,ru:5,fr:6};
+const W={Mann:['bărbat','чоловік','đàn ông','adam','kişi','мужчина','homme'],Hund:['câine','собака','chó','köpek','it','собака','chien'],Kaffee:['cafea','кава','cà phê','kahve','qəhvə','кофе','café'],Arzt:['doctor','лікар','bác sĩ','doktor','həkim','врач','médecin'],Freund:['prieten','друг','bạn','arkadaş','dost','друг','ami'],Lehrer:['profesor','вчитель','thầy','öğretmen','müəllim','учитель','prof'],Bruder:['frate','брат','anh','kardeş','qardaş','брат','frère'],Park:['parc','парк','công viên','park','park','парк','parc'],Schlüssel:['cheie','ключ','chìa khóa','anahtar','açar','ключ','clé'],Kuchen:['prăjitură','торт','bánh','pasta','tort','торт','gâteau'],Bus:['autobuz','автобус','xe buýt','otobüs','avtobus','автобус','bus'],Film:['film','фільм','phim','film','film','фильм','film'],Frau:['femeie','жінка','phụ nữ','kadın','qadın','женщина','femme'],Katze:['pisică','кішка','mèo','kedi','pişik','кошка','chat'],Schule:['școală','школа','trường','okul','məktəb','школа','école'],Tasche:['geantă','сумка','túi','çanta','çanta','сумка','sac'],Freundin:['prietenă','подруга','bạn gái','arkadaş','rəfiqə','подруга','amie'],Küche:['bucătărie','кухня','bếp','mutfak','mətbəx','кухня','cuisine'],Arbeit:['muncă','робота','việc','iş','iş','работа','travail'],Straße:['stradă','вулиця','đường','sokak','küçə','улица','rue'],Kind:['copil','дитина','trẻ','çocuk','uşaq','ребёнок','enfant'],Buch:['carte','книга','sách','kitap','kitab','книга','livre'],Auto:['mașină','машина','xe','araba','maşın','машина','voiture'],Haus:['casă','будинок','nhà','ev','ev','дом','maison'],Handy:['telefon','телефон','đt','telefon','telefon','телефон','tél.'],Bier:['bere','пиво','bia','bira','pivə','пиво','bière'],Kino:['cinema','кіно','rạp','sinema','kino','кино','cinéma'],Büro:['birou','офіс','vp','ofis','ofis','офис','bureau'],Stadt:['oraș','місто','tp','şehir','şəhər','город','ville'],Garten:['grădină','сад','vườn','bahçe','bağ','сад','jardin'],Supermarkt:['supermarket','маркет','siêu thị','market','market','маркет','supermarché'],
+Tisch:['masă','стіл','bàn','masa','stol','стол','table'],Stuhl:['scaun','стілець','ghế','sandalye','stul','стул','chaise'],Baum:['copac','дерево','cây','ağaç','ağac','дерево','arbre'],Zug:['tren','потяг','tàu','tren','qatar','поезд','train'],Apfel:['măr','яблуко','táo','elma','alma','яблоко','pomme'],Sohn:['fiu','син','con trai','oğul','oğul','сын','fils'],Vater:['tată','батько','bố','baba','ata','отец','père'],Onkel:['unchi','дядько','chú','amca','əmi','дядя','oncle'],Chef:['șef','шеф','sếp','patron','rəhbər','шеф','chef'],Nachbar:['vecin','сусід','hàng xóm','komşu','qonşu','сосед','voisin'],Koffer:['valiză','валіза','vali','bavul','çamadan','чемодан','valise'],Brief:['scrisoare','лист','thư','mektup','məktub','письмо','lettre'],Computer:['computer','комп\'ютер','máy tính','bilgisayar','kompüter','компьютер','ordinateur'],Rucksack:['rucsac','рюкзак','ba lô','sırt çantası','bel çantası','рюкзак','sac à dos'],Regenschirm:['umbrelă','парасолька','ô','şemsiye','çətir','зонт','parapluie'],Mantel:['palton','пальто','áo khoác','palto','palto','пальто','manteau'],Pullover:['pulover','светр','áo len','kazak','sviter','свитер','pull'],Tee:['ceai','чай','trà','çay','çay','чай','thé'],Saft:['suc','сік','nước ép','meyve suyu','şirə','сок','jus'],Wein:['vin','вино','rượu','şarap','şərab','вино','vin'],
+Mutter:['mamă','мати','mẹ','anne','ana','мать','mère'],Schwester:['soră','сестра','chị','kız kardeş','bacı','сестра','sœur'],Tochter:['fiică','дочка','con gái','kız','qız','дочь','fille'],Lehrerin:['profesoară','вчителька','cô giáo','öğretmen','müəllimə','учительница','professeure'],Ärztin:['doctoriță','лікарка','bác sĩ nữ','kadın doktor','həkim','врач','médecin'],Blume:['floare','квітка','hoa','çiçek','çiçək','цветок','fleur'],Zeitung:['ziar','газета','báo','gazete','qəzet','газета','journal'],Lampe:['lampă','лампа','đèn','lamba','lampa','лампа','lampe'],Brille:['ochelari','окуляри','kính','gözlük','eynək','очки','lunettes'],Jacke:['jachetă','куртка','áo khoác','ceket','gödəkçə','куртка','veste'],Uhr:['ceas','годинник','đồng hồ','saat','saat','часы','montre'],Tür:['ușă','двері','cửa','kapı','qapı','дверь','porte'],Wand:['perete','стіна','tường','duvar','divar','стена','mur'],Bank:['bancă','лавка','ghế dài','bank','skamya','скамейка','banc'],Kirche:['biserică','церква','nhà thờ','kilise','kilsə','церковь','église'],Musik:['muzică','музика','nhạc','müzik','musiqi','музыка','musique'],Post:['poștă','пошта','bưu điện','postane','poçt','почта','poste'],
+Mädchen:['fată','дівчинка','cô gái','kız','qız','девочка','fille'],Baby:['bebeluș','немовля','em bé','bebek','körpə','малыш','bébé'],Fenster:['fereastră','вікно','cửa sổ','pencere','pəncərə','окно','fenêtre'],Bett:['pat','ліжко','giường','yatak','çarpayı','кровать','lit'],Sofa:['canapea','диван','ghế sofa','kanepe','divan','диван','canapé'],Zimmer:['cameră','кімната','phòng','oda','otaq','комната','chambre'],Geschenk:['cadou','подарунок','quà','hediye','hədiyyə','подарок','cadeau'],Problem:['problemă','проблема','vấn đề','sorun','problem','проблема','problème'],Geld:['bani','гроші','tiền','para','pul','деньги','argent'],Wasser:['apă','вода','nước','su','su','вода','eau'],Brot:['pâine','хліб','bánh mì','ekmek','çörək','хлеб','pain'],Restaurant:['restaurant','ресторан','nhà hàng','restoran','restoran','ресторан','restaurant'],Hotel:['hotel','готель','khách sạn','otel','otel','отель','hôtel'],Fahrrad:['bicicletă','велосипед','xe đạp','bisiklet','velosiped','велосипед','vélo'],Taxi:['taxi','таксі','taxi','taksi','taksi','такси','taxi'],Flugzeug:['avion','літак','máy bay','uçak','təyyarə','самолёт','avion']};
+function wt(n){return W[n]?W[n][li[lang]]:n;}
+// Romanian articulated forms for Nominativ (subject needs article in Romanian)
+const RO_ART={Mann:'Bărbatul',Hund:'Câinele',Kaffee:'Cafeaua',Arzt:'Doctorul',Freund:'Prietenul',Lehrer:'Profesorul',Bruder:'Fratele',Park:'Parcul',Schlüssel:'Cheia',Kuchen:'Prăjitura',Bus:'Autobuzul',Film:'Filmul',Frau:'Femeia',Katze:'Pisica',Schule:'Școala',Tasche:'Geanta',Freundin:'Prietena',Küche:'Bucătăria',Arbeit:'Munca',Straße:'Strada',Kind:'Copilul',Buch:'Cartea',Auto:'Mașina',Haus:'Casa',Handy:'Telefonul',Bier:'Berea',Kino:'Cinematograful',Büro:'Biroul',Stadt:'Orașul',Garten:'Grădina',Supermarkt:'Supermarketul',Tisch:'Masa',Stuhl:'Scaunul',Baum:'Copacul',Zug:'Trenul',Apfel:'Mărul',Sohn:'Fiul',Vater:'Tatăl',Onkel:'Unchiul',Chef:'Șeful',Nachbar:'Vecinul',Koffer:'Valiza',Brief:'Scrisoarea',Computer:'Computerul',Rucksack:'Rucsacul',Regenschirm:'Umbrela',Mantel:'Paltonul',Pullover:'Puloverul',Tee:'Ceaiul',Saft:'Sucul',Wein:'Vinul',Mutter:'Mama',Schwester:'Sora',Tochter:'Fiica',Lehrerin:'Profesoara',Ärztin:'Doctorița',Blume:'Floarea',Zeitung:'Ziarul',Lampe:'Lampa',Brille:'Ochelarii',Jacke:'Jacheta',Uhr:'Ceasul',Tür:'Ușa',Wand:'Peretele',Bank:'Banca',Kirche:'Biserica',Musik:'Muzica',Post:'Poșta',Mädchen:'Fata',Baby:'Bebelușul',Fenster:'Fereastra',Bett:'Patul',Sofa:'Canapeaua',Zimmer:'Camera',Geschenk:'Cadoul',Problem:'Problema',Geld:'Banii',Wasser:'Apa',Brot:'Pâinea',Restaurant:'Restaurantul',Hotel:'Hotelul',Fahrrad:'Bicicleta',Taxi:'Taxiul',Flugzeug:'Avionul'};
+function wtNom(n){if(lang==='ro'&&RO_ART[n])return RO_ART[n];return wt(n);}
+function pick(a){return a[Math.floor(Math.random()*a.length)];}
+function art(g,c,d){const x={m:{nom:d?'der':'ein',akk:d?'den':'einen',dat:d?'dem':'einem'},f:{nom:d?'die':'eine',akk:d?'die':'eine',dat:d?'der':'einer'},n:{nom:d?'das':'ein',akk:d?'das':'ein',dat:d?'dem':'einem'}};return x[g][c];}
+const NOM_T=[['{a} {n} schläft.',['doarme','спить','ngủ','uyuyor','yatır','спит','dort']],['{a} {n} ist sehr groß.',['e foarte mare','дуже великий','rất lớn','çok büyük','çox böyük','очень большой','est très grand']],['{a} {n} kommt morgen.',['vine mâine','прийде завтра','đến mai','yarın gelecek','sabah gələcək','придёт завтра','vient demain']],['{a} {n} arbeitet hier.',['lucrează aici','працює тут','làm ở đây','burada çalışıyor','burada işləyir','работает тут','travaille ici']],['{a} {n} spielt draußen.',['se joacă afară','грає надворі','chơi ngoài','dışarıda oynuyor','bayırda oynayır','играет на улице','joue dehors']],['{a} {n} lacht laut.',['râde tare','голосно сміється','cười to','yüksek sesle gülüyor','ucadan gülür','громко смеётся','rit fort']]];
+const AKK_T=[['Ich sehe {a} {n}.',['Eu văd','Я бачу','Tôi thấy','Görüyorum','Görürəm','Я вижу','Je vois']],['Er kauft {a} {n}.',['El cumpără','Він купує','Anh mua','Satın alıyor','Alır','Он покупает','Il achète']],['Wir suchen {a} {n}.',['Noi căutăm','Ми шукаємо','Chúng tôi tìm','Arıyoruz','Axtarırıq','Мы ищем','Nous cherchons']],['Sie braucht {a} {n}.',['Ea are nevoie de','Їй потрібен','Cô cần','İhtiyacı var','Ehtiyacı var','Ей нужен','Elle a besoin de']],['Du nimmst {a} {n}.',['Tu iei','Ти береш','Bạn lấy','Alıyorsun','Götürürsən','Ты берёшь','Tu prends']],['Ich lese {a} {n}.',['Eu citesc','Я читаю','Tôi đọc','Okuyorum','Oxuyuram','Я читаю','Je lis']],['Er besucht {a} {n}.',['El vizitează','Він відвідує','Anh thăm','Ziyaret ediyor','Ziyarət edir','Он навещает','Il visite']]];
+const DAT_T=[['Ich helfe {a} {n}.',['Eu ajut','Я допомагаю','Tôi giúp','Yardım ediyorum','Kömək edirəm','Я помогаю','J\'aide']],['Er dankt {a} {n}.',['El mulțumește','Він дякує','Anh cảm ơn','Teşekkür ediyor','Təşəkkür edir','Он благодарит','Il remercie']],['Das gehört {a} {n}.',['Asta aparține','Це належить','Cái này của','Ait','Aiddir','Это принадлежит','Ça appartient à']],['Sie antwortet {a} {n}.',['Ea răspunde','Вона відповідає','Cô trả lời','Cevap veriyor','Cavab verir','Она отвечает','Elle répond à']],['Wir gratulieren {a} {n}.',['Noi felicităm','Ми вітаємо','Chúng tôi chúc','Tebrik ediyoruz','Təbrik edirik','Мы поздравляем','Nous félicitons']]];
+const PA_T=[['Er geht durch {a} {n}.',['El merge prin','Він іде через','Anh đi qua','Geçiyor','Keçir','Он идёт через','Il traverse']],['Das ist für {a} {n}.',['Asta e pentru','Це для','Đây cho','Bu için','Bu üçün','Это для','C\'est pour']],['Sie läuft ohne {a} {n}.',['Ea aleargă fără','Вона біжить без','Cô chạy không','Olmadan koşuyor','Olmadan qaçır','Она бежит без','Elle court sans']],['Wir gehen um {a} {n}.',['Noi mergem în jurul','Ми йдемо навколо','Đi quanh','Etrafında','Ətrafında','Мы идём вокруг','Nous allons autour de']]];
+const PD_T=[['Er fährt mit {a} {n}.',['El merge cu','Він їде з','Anh đi bằng','İle gidiyor','İlə gedir','Он едет на','Il va avec']],['Sie kommt aus {a} {n}.',['Ea vine din','Вона з','Cô từ','Geliyor','Gəlir','Она из','Elle vient de']],['Ich gehe zu {a} {n}.',['Eu merg la','Я іду до','Tôi đi đến','Gidiyorum','Gedirəm','Я иду к','Je vais à']],['Nach {a} {n} esse ich.',['După','Після','Sau','Sonra','Sonra','После','Après']],['Er wohnt bei {a} {n}.',['El locuiește la','Він живе у','Anh sống ở','Yanında','Yanında','Он живёт у','Il habite chez']]];
+const WE_T=[['Er geht in {a} {n}.','akk',['El merge în','Він іде в','Anh đi vào','Giriyor','Gedir','Он идёт в','Il va dans']],['Er ist in {a} {n}.','dat',['El e în','Він у','Anh ở','İçinde','İçindədir','Он в','Il est dans']],['Sie legt es auf {a} {n}.','akk',['Ea pune pe','Вона кладе на','Cô đặt lên','Koyuyor','Qoyur','Она кладёт на','Elle pose sur']],['Es liegt auf {a} {n}.','dat',['Stă pe','Лежить на','Nằm trên','Üstünde','Üstündədir','Лежит на','C\'est sur']],['Ich gehe vor {a} {n}.','akk',['Eu merg în fața','Я іду перед','Tôi đi trước','Önüne gidiyorum','Önünə gedirəm','Я иду перед','Je vais devant']],['Ich stehe vor {a} {n}.','dat',['Eu stau în fața','Я стою перед','Tôi đứng trước','Önünde duruyorum','Önündə dururam','Я стою перед','Je suis devant']]];
+const NS={nom:{m:['Mann','Hund','Lehrer','Arzt','Freund','Bruder','Vater','Sohn','Onkel','Chef','Nachbar','Bus','Zug','Baum','Computer'],f:['Frau','Katze','Freundin','Mutter','Schwester','Tochter','Lehrerin','Ärztin','Blume','Lampe','Uhr','Musik'],n:['Kind','Auto','Haus','Mädchen','Baby','Buch','Fahrrad','Flugzeug','Taxi','Fenster','Sofa','Bett']},akk:{m:['Mann','Hund','Kaffee','Kuchen','Film','Schlüssel','Bus','Freund','Arzt','Lehrer','Bruder','Tee','Saft','Wein','Apfel','Brief','Computer','Koffer','Rucksack','Regenschirm','Mantel','Pullover','Stuhl','Tisch','Zug'],f:['Frau','Katze','Tasche','Freundin','Stadt','Zeitung','Blume','Lampe','Brille','Jacke','Uhr','Tür','Schwester','Mutter','Lehrerin','Musik'],n:['Kind','Buch','Auto','Handy','Bier','Kino','Wasser','Brot','Geschenk','Problem','Geld','Fenster','Bett','Sofa','Zimmer','Fahrrad','Taxi','Flugzeug','Restaurant','Hotel']},dat:{m:['Mann','Freund','Bruder','Lehrer','Arzt','Vater','Sohn','Onkel','Chef','Nachbar','Hund'],f:['Frau','Freundin','Mutter','Schwester','Tochter','Lehrerin','Ärztin','Katze'],n:['Kind','Mädchen','Baby']},pa:{m:['Park','Garten','Freund','Bruder','Mann','Hund','Nachbar','Vater','Sohn','Chef','Lehrer','Arzt'],f:['Stadt','Straße','Schule','Freundin','Schwester','Mutter','Tochter','Lehrerin','Katze'],n:['Haus','Auto','Kind','Baby','Mädchen','Geschenk','Geld']},pd:{m:['Bus','Freund','Bruder','Arzt','Supermarkt','Park','Zug','Bahnhof','Vater','Onkel','Nachbar','Lehrer','Chef','Garten'],f:['Arbeit','Schule','Küche','Freundin','Straße','Post','Kirche','Bank','Mutter','Schwester','Lehrerin','Ärztin'],n:['Auto','Haus','Büro','Kino','Restaurant','Hotel','Fenster','Bett','Zimmer','Fahrrad']},we:{m:['Park','Garten','Supermarkt','Tisch','Stuhl','Baum','Bus','Zug'],f:['Schule','Küche','Stadt','Straße','Kirche','Bank','Post','Wand'],n:['Haus','Büro','Kino','Restaurant','Hotel','Bett','Zimmer','Fenster']}};
+const PRON=[{n:'ich',a:'mich',d:'mir'},{n:'du',a:'dich',d:'dir'},{n:'er',a:'ihn',d:'ihm'},{n:'sie',a:'sie',d:'ihr'},{n:'wir',a:'uns',d:'uns'}];
+const WF=[{q:'___ ist das?',a:'Wer',o:['Wer','Wen','Wem','Was'],tr:['Cine e?','Хто це?','Ai đây?','Kim bu?','Kimdir?','Кто это?','Qui ?']},{q:'___ siehst du?',a:'Wen',o:['Wer','Wen','Wem','Was'],tr:['Pe cine vezi?','Кого бачиш?','Thấy ai?','Kimi?','Kimi?','Кого?','Qui vois-tu?']},{q:'___ hilfst du?',a:'Wem',o:['Wer','Wen','Wem','Was'],tr:['Cui ajuți?','Кому?','Giúp ai?','Kime?','Kimə?','Кому?','À qui?']},{q:'___ trinkst du?',a:'Was',o:['Wer','Wen','Wem','Was'],tr:['Ce bei?','Що?','Uống gì?','Ne?','Nə?','Что?','Quoi?']},{q:'___ wohnst du?',a:'Wo',o:['Wo','Wohin','Woher','Wann'],tr:['Unde?','Де?','Ở đâu?','Nerede?','Harada?','Где?','Où?']},{q:'___ gehst du?',a:'Wohin',o:['Wo','Wohin','Woher','Wann'],tr:['Încotro?','Куди?','Đi đâu?','Nereye?','Haraya?','Куда?','Où vas-tu?']},{q:'___ kommst du?',a:'Woher',o:['Wo','Wohin','Woher','Wann'],tr:['De unde?','Звідки?','Từ đâu?','Nereden?','Haradan?','Откуда?','D\'où?']},{q:'___ kaufst du das?',a:'Was',o:['Was','Wen','Wem','Wer'],tr:['Ce cumperi?','Що купуєш?','Mua gì?','Ne alıyorsun?','Nə alırsan?','Что?','Qu\'achètes-tu?']}];
+
+let cat='all',sc=0,wr=0,stk=0,cur=null,ans=false,used=new Set();
+function SL(l,el){lang=l;document.querySelectorAll('#langRow .btn').forEach(e=>e.classList.remove('active'));el.classList.add('active');updUI();if(document.getElementById('rP').classList.contains('show'))bRef();NX();}
+function SC(c,el){cat=c;document.querySelectorAll('#catRow .btn').forEach(e=>e.classList.remove('active'));el.classList.add('active');used.clear();NX();}
+function ST(id,el){document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));el.classList.add('active');document.getElementById('gP').classList.toggle('show',id==='g');document.getElementById('rP').classList.toggle('show',id==='r');document.getElementById('eP').classList.toggle('show',id==='e');document.getElementById('catRow').style.display=id==='g'?'flex':'none';if(id==='r')bRef();if(id==='e')bExpl();}
+
+function bExpl(){document.getElementById('eP').innerHTML=`<h3>Perfekt (haben/sein + Partizip II)</h3>
+<p><b>Regulat:</b> ge- + Stamm + -t → machen → ge<b>mach</b>t, kaufen → ge<b>kauf</b>t</p>
+<p><b>Neregulat:</b> ge- + Stamm modificat + -en → gehen → ge<b>gang</b>en, trinken → ge<b>trunk</b>en</p>
+<p><b>Prefix separabil:</b> prefix + ge + Stamm → ein|kaufen → <b>ein</b>ge<b>kauf</b>t, auf|stehen → <b>auf</b>ge<b>stand</b>en</p>
+<p><b>Fără ge-:</b> verbe cu -ieren → studieren → studier<b>t</b>; prefix neseparabil (be-,er-,ver-,ent-,emp-,zer-) → besuchen → besuch<b>t</b></p>
+<h3 style="margin-top:12px">Haben sau Sein?</h3>
+<p style="color:#4caf50"><b>SEIN</b> = mișcare cu direcție + schimbare de stare:<br>gehen, kommen, fahren, fliegen, laufen, schwimmen, fallen, sterben, werden, sein, bleiben, aufstehen, einschlafen</p>
+<p style="color:#f44336"><b>HABEN</b> = tot restul (majoritatea verbelor!):<br>machen, kaufen, essen, trinken, lesen, schreiben, sehen, hören, spielen, arbeiten, lernen, helfen...</p>
+<h3 style="margin-top:12px">Präteritum</h3>
+<p><b>Regulat:</b> Stamm + -te/-test/-te/-ten → machen → ich mach<b>te</b>, du mach<b>test</b></p>
+<p><b>Neregulat:</b> Stamm se schimbă → gehen → ich <b>ging</b>, trinken → ich <b>trank</b></p>
+<p><b>Haben/Sein:</b> ich <b>hatte</b>/ich <b>war</b> (cele mai importante!)</p>
+<p style="color:#aaa;margin-top:8px"><i>Perfekt = vorbire zilnică. Präteritum = texte scrise, haben/sein/Modalverben.</i></p>`;}
+
+// === VERBS FOR PAST TENSE ===
+// [infinitiv, partizip II, aux(h/s), präteritum_ich, infinitiv_tr[7], trecut_tr[7]]
+const VERBS_REG=[
+['machen','gemacht','h','machte',['a face','робити','làm','yapmak','etmək','делать','faire'],['făcut','зробив','làm','yaptı','etdi','сделал','fait']],
+['kaufen','gekauft','h','kaufte',['a cumpăra','купувати','mua','satın almak','almaq','покупать','acheter'],['cumpărat','купив','mua','satın aldı','aldı','купил','acheté']],
+['spielen','gespielt','h','spielte',['a juca','грати','chơi','oynamak','oynamaq','играть','jouer'],['jucat','грав','chơi','oynadı','oynadı','играл','joué']],
+['lernen','gelernt','h','lernte',['a învăța','вчити','học','öğrenmek','öyrənmək','учить','apprendre'],['învățat','вчив','học','öğrendi','öyrəndi','учил','appris']],
+['arbeiten','gearbeitet','h','arbeitete',['a lucra','працювати','làm việc','çalışmak','işləmək','работать','travailler'],['lucrat','працював','làm việc','çalıştı','işlədi','работал','travaillé']],
+['kochen','gekocht','h','kochte',['a găti','готувати','nấu','pişirmek','bişirmək','готовить','cuisiner'],['gătit','готував','nấu','pişirdi','bişirdi','готовил','cuisiné']],
+['hören','gehört','h','hörte',['a auzi','чути','nghe','duymak','eşitmək','слышать','entendre'],['auzit','чув','nghe','duydu','eşitdi','слышал','entendu']],
+['fragen','gefragt','h','fragte',['a întreba','питати','hỏi','sormak','soruşmaq','спрашивать','demander'],['întrebat','питав','hỏi','sordu','soruşdu','спросил','demandé']],
+['wohnen','gewohnt','h','wohnte',['a locui','жити','sống','yaşamak','yaşamaq','жить','habiter'],['locuit','жив','sống','yaşadı','yaşadı','жил','habité']],
+['tanzen','getanzt','h','tanzte',['a dansa','танцювати','nhảy','dans etmek','rəqs etmək','танцевать','danser'],['dansat','танцював','nhảy','dans etti','rəqs etdi','танцевал','dansé']],
+];
+const VERBS_IRR=[
+['gehen','gegangen','s','ging',['a merge','іти','đi','gitmek','getmək','идти','aller'],['mers','пішов','đi','gitti','getdi','пошёл','allé']],
+['kommen','gekommen','s','kam',['a veni','приходити','đến','gelmek','gəlmək','приходить','venir'],['venit','прийшов','đến','geldi','gəldi','пришёл','venu']],
+['fahren','gefahren','s','fuhr',['a conduce','їхати','lái','sürmek','sürmək','ехать','conduire'],['condus','їхав','lái','sürdü','sürdü','ехал','conduit']],
+['fliegen','geflogen','s','flog',['a zbura','летіти','bay','uçmak','uçmaq','лететь','voler'],['zburat','летів','bay','uçtu','uçdu','летел','volé']],
+['laufen','gelaufen','s','lief',['a alerga','бігти','chạy','koşmak','qaçmaq','бежать','courir'],['alergat','бігав','chạy','koştu','qaçdı','бежал','couru']],
+['trinken','getrunken','h','trank',['a bea','пити','uống','içmek','içmək','пить','boire'],['băut','пив','uống','içti','içdi','пил','bu']],
+['essen','gegessen','h','aß',['a mânca','їсти','ăn','yemek','yemək','есть','manger'],['mâncat','їв','ăn','yedi','yedi','ел','mangé']],
+['lesen','gelesen','h','las',['a citi','читати','đọc','okumak','oxumaq','читать','lire'],['citit','читав','đọc','okudu','oxudu','читал','lu']],
+['schreiben','geschrieben','h','schrieb',['a scrie','писати','viết','yazmak','yazmaq','писать','écrire'],['scris','писав','viết','yazdı','yazdı','писал','écrit']],
+['sehen','gesehen','h','sah',['a vedea','бачити','thấy','görmek','görmək','видеть','voir'],['văzut','бачив','thấy','gördü','gördü','видел','vu']],
+['schlafen','geschlafen','h','schlief',['a dormi','спати','ngủ','uyumak','yatmaq','спать','dormir'],['dormit','спав','ngủ','uyudu','yatdı','спал','dormi']],
+['sprechen','gesprochen','h','sprach',['a vorbi','говорити','nói','konuşmak','danışmaq','говорить','parler'],['vorbit','говорив','nói','konuştu','danışdı','говорил','parlé']],
+['nehmen','genommen','h','nahm',['a lua','брати','lấy','almak','götürmək','брать','prendre'],['luat','взяв','lấy','aldı','götürdü','взял','pris']],
+['finden','gefunden','h','fand',['a găsi','знаходити','tìm','bulmak','tapmaq','находить','trouver'],['găsit','знайшов','tìm thấy','buldu','tapdı','нашёл','trouvé']],
+['bleiben','geblieben','s','blieb',['a rămâne','залишатися','ở lại','kalmak','qalmaq','оставаться','rester'],['rămas','залишився','ở lại','kaldı','qaldı','остался','resté']],
+['aufstehen','aufgestanden','s','stand auf',['a se trezi','вставати','dậy','kalkmak','durmaq','вставать','se lever'],['trezit','встав','dậy','kalktı','durdu','встал','levé']],
+['schwimmen','geschwommen','s','schwamm',['a înota','плавати','bơi','yüzmek','üzmək','плавать','nager'],['înotat','плавав','bơi','yüzdü','üzdü','плавал','nagé']],
+];
+const subjTr={Ich:['Eu am','Я','Tôi đã','Ben','Mən','Я','J\'ai'],Du:['Tu ai','Ти','Bạn đã','Sen','Sən','Ты','Tu as'],Er:['El a','Він','Anh ấy đã','O','O','Он','Il a'],Sie:['Ea a','Вона','Cô ấy đã','O','O','Она','Elle a'],Wir:['Noi am','Ми','Chúng tôi đã','Biz','Biz','Мы','Nous avons']};
+const yesterdayTr=['ieri','вчора','hôm qua','dün','dünən','вчера','hier'];
+const SUBJ_PERF=[['Ich','habe','bin'],['Du','hast','bist'],['Er','hat','ist'],['Sie','hat','ist'],['Wir','haben','sind']];
+
+const SUBJ_PRAET=[['Ich',0],['Du',1],['Er',2],['Sie',2],['Wir',3]];
+function praetConj(v,si){
+// Regular: stem+te/test/te/ten
+if(v[3].endsWith('te')){const st=v[3].slice(0,-2);const ends=['te','test','te','te','ten'];return st+ends[si];}
+// Irregular: use base form for ich, modify for others
+const base=v[3].includes(' ')?v[3]:v[3];// handle "stand auf"
+if(si===0)return base;if(si===1)return base+(base.endsWith('t')?'est':'st');if(si===2)return base;if(si===3)return base+'en';
+return base;
+}
+function updUI(){document.getElementById('sub').textContent=t('sub');document.getElementById('hb').textContent=t('hint');document.getElementById('nxt').textContent=t('next');}
+function bRef(){
+const casNom={ro:'Cine?',uk:'Хто?',vi:'Ai?',tr:'Kim?',az:'Kim?',ru:'Кто?',fr:'Qui?'};
+const casAkk={ro:'Pe cine?',uk:'Кого?',vi:'Ai/Gì?',tr:'Kimi?',az:'Kimi?',ru:'Кого?',fr:'Qui/Quoi?'};
+const casDat={ro:'Cui?',uk:'Кому?',vi:'Cho ai?',tr:'Kime?',az:'Kimə?',ru:'Кому?',fr:'À qui?'};
+document.getElementById('rP').innerHTML=`<h3>${t('ref')}</h3>
+<table class="ref"><tr><th></th><th>${t('m')}</th><th>${t('f')}</th><th>${t('n')}</th></tr>
+<tr><td><b>NOM</b> (${casNom[lang]})</td><td>der/ein</td><td>die/eine</td><td>das/ein</td></tr>
+<tr><td><b>AKK</b> (${casAkk[lang]})</td><td style="color:#e94560"><b>den/einen</b></td><td>die/eine</td><td>das/ein</td></tr>
+<tr><td><b>DAT</b> (${casDat[lang]})</td><td style="color:#f0c040"><b>dem/einem</b></td><td style="color:#f0c040"><b>der/einer</b></td><td style="color:#f0c040"><b>dem/einem</b></td></tr></table>
+<h3>Pronomen (${t('ref')})</h3>
+<table class="ref"><tr><th></th><th>ich</th><th>du</th><th>er</th><th>sie</th><th>es</th><th>wir</th><th>ihr</th><th>sie/Sie</th></tr>
+<tr><td><b>NOM</b></td><td>ich</td><td>du</td><td>er</td><td>sie</td><td>es</td><td>wir</td><td>ihr</td><td>sie</td></tr>
+<tr><td><b>AKK</b></td><td>mich</td><td>dich</td><td>ihn</td><td>sie</td><td>es</td><td>uns</td><td>euch</td><td>sie</td></tr>
+<tr><td><b>DAT</b></td><td>mir</td><td>dir</td><td>ihm</td><td>ihr</td><td>ihm</td><td>uns</td><td>euch</td><td>ihnen</td></tr></table>
+<p style="color:#f44336;margin-top:10px">${t('prepA')}</p><p style="color:#4caf50">${t('prepD')}</p><p style="color:#ff9800">${t('prepW')}</p>`;}
+
+function gen(){
+const cats=cat==='all'?['nom','akk','dat','pa','pd','we','pron','wf','perfekt','praet']:[cat==='prep'?pick(['pa','pd']):cat==='wech'?'we':cat];
+const tp=pick(Array.isArray(cats)?cats:[cats]);
+let sentence,answer,options,hint,expl,trans;
+if(tp==='pron'){const p=pick(PRON);const isA=Math.random()>0.5;answer=isA?p.a:p.d;sentence=`Er ${isA?'sieht':'hilft'} ___ . (${p.n})`;hint=isA?t('vAkk'):t('vDat');expl=`"${p.n}" ${isA?t('prAkk'):t('prDat')} <b>${answer}</b> (${t('other')} ${isA?p.d:p.a})`;trans='';options=[p.a,p.d];while(options.length<4)options.push(pick(['mich','mir','dich','dir','ihn','ihm','uns','euch'].filter(x=>!options.includes(x))));}
+else if(tp==='wf'){const w=pick(WF);sentence=w.q;answer=w.a;options=[...w.o];hint=t('think');expl=`<b>${w.a}</b>`;trans=`${t('translation')} ${w.tr[li[lang]]}`;}
+else if(tp==='perfekt'){
+const v=pick([...VERBS_REG,...VERBS_IRR]);const[s,hab,sei]=pick(SUBJ_PERF);
+const aux=v[2]==='h'?hab:sei;answer=v[1];
+sentence=`${s} ${aux} gestern ___ . (${v[0]})`;
+hint=`${v[0]} → Partizip II = ?`;
+const isReg=VERBS_REG.includes(v);
+expl=`<b>${v[0]}</b> → <b>${v[1]}</b> (${isReg?'regulat: ge-+Stamm+-t':'neregulat: ge-+Stamm+-en'})<br>Auxiliar: <b>${v[2]==='h'?'haben':'sein'}</b>${v[2]==='s'?' (mișcare/schimbare)':''}`;
+trans=`${t('translation')} ${(subjTr[s]||[s])[li[lang]]} ${yesterdayTr[li[lang]]} ${v[5][li[lang]]}.`;
+const others=[...VERBS_REG,...VERBS_IRR].filter(x=>x[1]!==v[1]);
+options=[v[1],pick(others)[1],pick(others)[1],'ge'+v[0].slice(0,-2)+'t'];
+}
+else if(tp==='praet'){
+const v=pick([...VERBS_REG,...VERBS_IRR]);const[s,si]=pick(SUBJ_PRAET);
+answer=praetConj(v,si);
+sentence=`${s} ___ gestern viel. (${v[0]})`;
+hint=`${v[0]} → Präteritum ${s} = ?`;
+const isReg=VERBS_REG.includes(v);
+expl=`<b>${v[0]}</b> → Prät.: <b>${v[3]}</b> (${isReg?'regulat: Stamm+-te':'neregulat'})<br>${s} → <b>${answer}</b>`;
+trans=`${t('translation')} ${(subjTr[s]||[s])[li[lang]]} ${yesterdayTr[li[lang]]} ${v[5][li[lang]]}.`;
+const others=[...VERBS_REG,...VERBS_IRR].filter(x=>x!==v);
+options=[answer,pick(others)[3],v[1],v[0]+'te'];
+}
+else{
+const tmpls=tp==='nom'?NOM_T:tp==='akk'?AKK_T:tp==='dat'?DAT_T:tp==='pa'?PA_T:tp==='pd'?PD_T:WE_T;
+const ns=NS[tp]||NS.akk;const g=pick(Object.keys(ns).filter(x=>ns[x].length>0));const noun=pick(ns[g]);
+const tmpl=pick(tmpls);const cas=tp==='nom'?'nom':tp==='akk'||tp==='pa'?'akk':tp==='dat'||tp==='pd'?'dat':(tp==='we'?(tmpl[1]==='akk'?'akk':'dat'):'akk');
+const def=Math.random()>0.5;answer=art(g,cas,def);
+const key=tmpl[0]+noun;if(used.has(key)&&used.size<500)return gen();used.add(key);
+sentence=tmpl[0].replace('{a}','___').replace('{n}',noun);
+const gn=t(g==='m'?'m':g==='f'?'f':'n');
+if(cas==='nom'){hint=t('nomR');expl=t('nomR')+`<br>"${noun}" = <b>${g==='m'?'der':g==='f'?'die':'das'} ${noun}</b> (${gn})`;}
+else if(cas==='akk'){hint=`${t('vAkk')} "${noun}"=${gn}`;expl=(g==='m'?t('mAkk'):t('noChg'))+`<br>"${noun}" = <b>${g==='m'?'der':g==='f'?'die':'das'} ${noun}</b> (${gn})`;}
+else{hint=`${t('vDat')} "${noun}"=${gn}`;expl=`${g==='m'?t('dM'):g==='f'?t('dF'):t('dN')}<br>"${noun}" = <b>${g==='m'?'der':g==='f'?'die':'das'} ${noun}</b> (${gn})`;}
+const trArr=tp==='we'?tmpl[2]:tmpl[1];
+const trV=trArr[li[lang]]||trArr[0]||'';
+const nTr=tp==='nom'?wtNom(noun):wt(noun);
+if(tp==='nom'){trans=`${t('translation')} ${nTr.charAt(0).toUpperCase()+nTr.slice(1)} ${trV}`;}
+else{trans=`${t('translation')} ${trV} ${nTr}.`;}
+if(cas==='nom')options=def?['der','die','das','dem']:['ein','eine','ein','einem'];
+else if(cas==='akk')options=def?['den','die','das','dem']:['einen','eine','ein','einem'];
+else options=def?['dem','der','den','das']:['einem','einer','einen','eine'];
+}
+if(!options.includes(answer))options[0]=answer;
+options=[...new Set(options)];while(options.length<4)options.push(pick(['den','dem','der','die','das','ein','eine','einen','einem','einer'].filter(x=>!options.includes(x))));
+return{sentence,answer,options:options.slice(0,4).sort(()=>Math.random()-0.5),hint,expl,trans};
+}
+function render(){cur=gen();ans=false;document.getElementById('q').innerHTML=cur.sentence.replace('___','<span class="blank">?</span>');document.getElementById('hb').textContent=t('hint');document.getElementById('exp').classList.remove('show');document.getElementById('nxt').classList.remove('show');document.getElementById('nxt').textContent=t('next');document.getElementById('opts').innerHTML=cur.options.map(o=>`<div class="opt" onclick="CK(this,'${o}')">${o}</div>`).join('');}
+function SH(){document.getElementById('hb').textContent='💡 '+cur.hint;}
+function CK(el,sel){if(ans)return;ans=true;document.querySelectorAll('.opt').forEach(o=>{if(o.textContent===cur.answer)o.classList.add('correct');if(o.textContent===sel&&sel!==cur.answer)o.classList.add('wrong');});let h='';if(sel===cur.answer){sc++;stk++;h=`<span style="color:#4caf50">${t('correct')}</span>`;}else{wr++;stk=0;h=`<span style="color:#f44336">${t('wrong')} <b style="color:#4caf50;font-size:1.2em">${cur.answer}</b></span><br><b>${t('why')}</b> ${cur.expl}`;}if(cur.trans){}document.getElementById('exp').innerHTML=h;document.getElementById('sc').textContent=sc;document.getElementById('wr').textContent=wr;document.getElementById('stk').textContent=stk;document.getElementById('exp').classList.add('show');document.getElementById('nxt').classList.add('show');}
+function NX(){render();}
+updUI();render();
+</script></body></html>
